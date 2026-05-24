@@ -39,7 +39,7 @@ export function Sidebar() {
             return (
               <Link
                 className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition ${
-                  activo ? "bg-white text-slate-950" : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                  activo ? "bg-white/10 text-white font-semibold" : "text-slate-300 hover:bg-slate-900 hover:text-white"
                 }`}
                 href={item.href}
                 key={item.label}

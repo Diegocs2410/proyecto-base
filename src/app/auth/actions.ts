@@ -59,6 +59,12 @@ function traducirError(message: string): string {
     "Password should be at least 6 characters": "La contrase\u00f1a debe tener m\u00ednimo 6 caracteres.",
     "Unable to validate email address: invalid format": "Ese correo no parece v\u00e1lido. Veri\u00edfica y vuelve a intentar.",
     "Signup is disabled": "El registro no est\u00e1 disponible en este momento.",
+    "Email rate limit exceeded": "Demasiados intentos. Espera unos minutos e int\u00e9ntalo de nuevo.",
+    "over_email_send_rate_limit": "L\u00edmite de correos alcanzado. Int\u00e9ntalo en unos minutos.",
+    "For security purposes, you can only request this after": "Demasiados intentos seguidos. Espera un momento.",
+    "Anonymous sign-ins are disabled": "El registro no est\u00e1 habilitado en este momento.",
+    "User already exists": "Ya existe una cuenta con ese correo. \u00bfQuieres entrar?",
   };
-  return errores[message] ?? "Algo sali\u00f3 mal. Int\u00e9ntalo de nuevo en un momento.";
+  const encontrado = Object.entries(errores).find(([key]) => message.includes(key));
+  return encontrado ? encontrado[1] : `Error al registrarse: ${message}`;
 }
