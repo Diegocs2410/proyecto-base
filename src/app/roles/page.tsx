@@ -1,17 +1,10 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
+import { getRolesGlobales } from "@/lib/data/dashboard";
 import { Plus, ShieldCheck } from "lucide-react";
 
-interface Rol {
-  id: string;
-  nombre: string;
-  alcance: string;
-  permisos: number;
-  organizaciones: number;
-}
-
 export default async function RolesPage() {
-  const roles: Rol[] = [];
+  const roles = await getRolesGlobales();
 
   return (
     <AppShell>
@@ -41,21 +34,23 @@ export default async function RolesPage() {
           </div>
         ) : (
           <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-            <div className="grid grid-cols-[1.5fr_1fr_0.8fr_0.8fr] bg-slate-50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-muted">
-              <span>Nombre del rol</span>
+            <div className="grid grid-cols-[1.5fr_1fr_1fr_0.7fr_0.8fr] bg-slate-50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-muted">
+              <span>Nombre</span>
+              <span>Código</span>
               <span>Alcance</span>
               <span>Permisos</span>
-              <span>Organizaciones</span>
+              <span>Organización</span>
             </div>
             {roles.map((rol) => (
               <div
-                className="grid grid-cols-[1.5fr_1fr_0.8fr_0.8fr] items-center border-t border-border px-6 py-4 text-sm transition hover:bg-slate-50/50"
+                className="grid grid-cols-[1.5fr_1fr_1fr_0.7fr_0.8fr] items-center border-t border-border px-6 py-4 text-sm transition hover:bg-slate-50/50"
                 key={rol.id}
               >
                 <span className="font-medium text-foreground">{rol.nombre}</span>
+                <span className="font-mono text-xs text-muted">{rol.codigo}</span>
                 <span className="text-muted">{rol.alcance}</span>
                 <span className="text-muted">{rol.permisos}</span>
-                <span className="text-muted">{rol.organizaciones}</span>
+                <span className="text-muted">{rol.organizacion}</span>
               </div>
             ))}
           </div>

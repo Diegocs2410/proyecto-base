@@ -11,9 +11,11 @@ export interface OrgContexto {
 
 export interface OrgMiembro {
   id: string;
+  userId: string;
   nombre: string;
   email: string;
   rol: string;
+  rolCode: string;
   estado: string;
   desde: string;
 }
@@ -84,7 +86,7 @@ export async function getOrgMiembros(tenantId: string): Promise<OrgMiembro[]> {
 
   const { data, error } = await admin
     .from("tenant_users")
-    .select("id, role, status, created_at, user:user_id(email, raw_user_meta_data)")
+    .select("id, user_id, role, status, created_at, user:user_id(email, raw_user_meta_data)")
     .eq("tenant_id", tenantId)
     .order("created_at", { ascending: true });
 
@@ -96,9 +98,11 @@ export async function getOrgMiembros(tenantId: string): Promise<OrgMiembro[]> {
     const meta = user?.raw_user_meta_data ?? {};
     return {
       id: m.id as string,
-      nombre: (meta.nombre_completo as string) || user?.email?.split("@")[0] || "Usuario",
+      userId: m.user_id as string,
+      nombre: (meta.nombre_completo as string) || (meta.full_name as string) || user?.email?.split("@")[0] || "Usuario",
       email: user?.email ?? "—",
       rol: traducirRol(m.role as string),
+      rolCode: m.role as string,
       estado: m.status as string,
       desde: new Date(m.created_at as string).toLocaleDateString("es-CO", {
         year: "numeric",

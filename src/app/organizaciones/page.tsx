@@ -1,8 +1,8 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getOrganizaciones } from "@/lib/data/dashboard";
-import { Building2, ExternalLink, Plus } from "lucide-react";
+import { Building2, ExternalLink } from "lucide-react";
+import { NuevaOrgModal } from "@/app/organizaciones/nueva-org-modal";
 import Link from "next/link";
 
 export default async function OrganizacionesPage() {
@@ -18,10 +18,7 @@ export default async function OrganizacionesPage() {
               Todas las empresas registradas en la plataforma.
             </p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4" />
-            Nueva organización
-          </Button>
+          <NuevaOrgModal />
         </div>
 
         {organizaciones.length === 0 ? (

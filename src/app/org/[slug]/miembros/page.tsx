@@ -1,9 +1,10 @@
+import { FilaMiembro } from "@/app/org/[slug]/miembros/fila-miembro";
 import { OrgShell } from "@/components/org/org-shell";
-import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { getOrgMiembros, getOrgPorSlug } from "@/lib/data/org";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
+
+const ROLES_PUEDEN_GESTIONAR = ["platform_admin", "tenant_owner", "tenant_admin"];
 
 export default async function OrgMiembrosPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -16,6 +17,8 @@ export default async function OrgMiembrosPage({ params }: { params: Promise<{ sl
   if (!org) notFound();
 
   const miembros = await getOrgMiembros(org.id);
+  const miActual = miembros.find((m) => m.userId === user.id);
+  const canManage = miActual ? ROLES_PUEDEN_GESTIONAR.includes(miActual.rolCode) : false;
 
   return (
     <OrgShell org={org}>
@@ -24,11 +27,11 @@ export default async function OrgMiembrosPage({ params }: { params: Promise<{ sl
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Equipo</h1>
             <p className="mt-1 text-sm text-muted">
-              Todas las personas con acceso a {org.nombre}.
+              {miembros.length} persona{miembros.length !== 1 ? "s" : ""} con acceso a {org.nombre}.
             </p>
           </div>
           <a
-            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
             href={`/org/${slug}/invitar`}
           >
             Invitar persona
@@ -42,29 +45,20 @@ export default async function OrgMiembrosPage({ params }: { params: Promise<{ sl
           </div>
         ) : (
           <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-            <div className="grid grid-cols-[1fr_1.2fr_1fr_0.8fr] bg-slate-50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-muted">
-              <span>Nombre</span>
-              <span>Correo</span>
-              <span>Rol</span>
+            <div className="grid grid-cols-[1fr_1.2fr_1.2fr_auto] bg-slate-50 px-6 py-3 text-xs font-medium uppercase tracking-wide text-muted">
+              <span>Miembro</span>
               <span>Desde</span>
+              <span>Rol</span>
+              <span />
             </div>
             {miembros.map((m) => (
-              <div
-                className="grid grid-cols-[1fr_1.2fr_1fr_0.8fr] items-center border-t border-border px-6 py-4 text-sm"
+              <FilaMiembro
+                canManage={canManage}
+                currentUserId={user.id}
                 key={m.id}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-xs font-bold text-white">
-                    {m.nombre[0]?.toUpperCase()}
-                  </div>
-                  <span className="font-medium text-foreground">{m.nombre}</span>
-                </div>
-                <span className="text-muted">{m.email}</span>
-                <span className="text-muted">{m.rol}</span>
-                <StatusBadge status={m.estado === "active" ? "success" : "warning"}>
-                  {m.estado === "active" ? "Activo" : "Inactivo"}
-                </StatusBadge>
-              </div>
+                miembro={m}
+                tenantId={org.id}
+              />
             ))}
           </div>
         )}

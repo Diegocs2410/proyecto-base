@@ -46,6 +46,93 @@ export async function getOrganizaciones() {
   }));
 }
 
+export async function getMiembrosGlobales() {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("tenant_users")
+    .select(`
+      id,
+      role,
+      status,
+      user:user_id(email, raw_user_meta_data),
+      tenant:tenant_id(name, slug)
+    `)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) return [];
+
+  return (data ?? []).map((m) => {
+    const user = m.user as unknown as { email: string; raw_user_meta_data: Record<string, unknown> } | null;
+    const tenant = Array.isArray(m.tenant)
+      ? (m.tenant[0] as { name: string; slug: string } | undefined)
+      : (m.tenant as { name: string; slug: string } | null);
+    const meta = user?.raw_user_meta_data ?? {};
+    return {
+      id: m.id as string,
+      nombre: (meta.full_name as string) || user?.email?.split("@")[0] || "Usuario",
+      email: user?.email ?? "—",
+      rol: traducirRolMiembro(m.role as string),
+      organizacion: tenant?.name ?? "—",
+      slugOrg: tenant?.slug ?? "",
+      estado: m.status as string,
+    };
+  });
+}
+
+export async function getRolesGlobales() {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("roles")
+    .select(`
+      id,
+      name,
+      code,
+      scope,
+      tenant:tenant_id(name),
+      permisos:role_permissions(permission_id)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+
+  return (data ?? []).map((r) => {
+    const tenant = Array.isArray(r.tenant)
+      ? (r.tenant[0] as { name: string } | undefined)
+      : (r.tenant as { name: string } | null);
+    return {
+      id: r.id as string,
+      nombre: r.name as string,
+      codigo: r.code as string,
+      alcance: traducirAlcance(r.scope as string),
+      permisos: Array.isArray(r.permisos) ? r.permisos.length : 0,
+      organizacion: tenant?.name ?? "Global",
+    };
+  });
+}
+
+function traducirRolMiembro(rol: string): string {
+  const roles: Record<string, string> = {
+    platform_admin: "Admin de plataforma",
+    tenant_owner: "Dueño",
+    tenant_admin: "Administrador",
+    member: "Miembro",
+    viewer: "Solo lectura",
+  };
+  return roles[rol] ?? rol;
+}
+
+function traducirAlcance(scope: string): string {
+  const alcances: Record<string, string> = {
+    platform: "Plataforma",
+    tenant: "Organización",
+    workspace: "Espacio",
+  };
+  return alcances[scope] ?? scope;
+}
+
 export async function getAuditReciente() {
   const supabase = createAdminClient();
 
