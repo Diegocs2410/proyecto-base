@@ -1,59 +1,28 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { Button } from "@/components/ui/button";
 import { PlanBadge } from "@/components/ui/plan-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { CreditCard, LayoutGrid, Plus, Users } from "lucide-react";
+import { getPlanesActivos } from "@/lib/data/billing";
+import { formatCOP } from "@/lib/i18n/co";
+import { CreditCard, LayoutGrid, Users } from "lucide-react";
 
-const planes = [
-  {
-    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    nombre: "Starter",
-    precio: "Gratis",
-    descripcion: "Ideal para equipos pequeños que están empezando.",
-    usuarios: "5",
-    espacios: "1",
-  },
-  {
-    id: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-    nombre: "Team",
-    precio: "$29/mes",
-    descripcion: "Para equipos en crecimiento con más colaboración.",
-    usuarios: "25",
-    espacios: "5",
-  },
-  {
-    id: "c3d4e5f6-a7b8-9012-cdef-123456789012",
-    nombre: "Business",
-    precio: "$99/mes",
-    descripcion: "Potencia avanzada para empresas en expansión.",
-    usuarios: "100",
-    espacios: "20",
-  },
-  {
-    id: "d4e5f6a7-b8c9-0123-def0-234567890123",
-    nombre: "Enterprise",
-    precio: "A la medida",
-    descripcion: "Solución personalizada para grandes organizaciones.",
-    usuarios: "Ilimitado",
-    espacios: "Ilimitados",
-  },
-];
+const DESCRIPCIONES: Record<string, string> = {
+  starter: "Ideal para equipos pequeños que están empezando.",
+  team: "Para equipos en crecimiento con más colaboración.",
+  business: "Potencia avanzada para empresas en expansión.",
+  enterprise: "Solución personalizada para grandes organizaciones.",
+};
 
 export default async function PlanesPage() {
+  const planes = await getPlanesActivos();
+
   return (
     <AppShell>
       <section className="grid gap-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Planes y facturación</h1>
-            <p className="mt-1 text-sm text-muted">
-              Gestiona los planes de suscripción disponibles en la plataforma.
-            </p>
-          </div>
-          <Button>
-            <Plus className="h-4 w-4" />
-            Nuevo plan
-          </Button>
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Planes y facturación</h1>
+          <p className="mt-1 text-sm text-muted">
+            Catálogo de planes disponibles en la plataforma.
+          </p>
         </div>
 
         {planes.length === 0 ? (
@@ -63,7 +32,7 @@ export default async function PlanesPage() {
             </div>
             <p className="mt-4 text-sm font-medium text-foreground">No hay planes configurados todavía</p>
             <p className="mt-1 text-sm text-muted">
-              Crea el primer plan para empezar a gestionar las suscripciones.
+              Crea el primer plan en Supabase Studio para empezar a gestionar suscripciones.
             </p>
           </div>
         ) : (
@@ -74,21 +43,25 @@ export default async function PlanesPage() {
                 key={plan.id}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <PlanBadge label={plan.nombre} />
+                  <PlanBadge label={plan.name} />
                   <StatusBadge status="success">Activo</StatusBadge>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-foreground">{plan.precio}</p>
-                  <p className="mt-1 text-sm text-muted">{plan.descripcion}</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {plan.priceCop > 0 ? `${formatCOP(plan.priceCop)} / mes` : "Gratis"}
+                  </p>
+                  <p className="mt-1 text-sm text-muted">
+                    {DESCRIPCIONES[plan.code] ?? "Plan personalizado."}
+                  </p>
                 </div>
                 <div className="flex flex-col gap-2 border-t border-border pt-4">
                   <div className="flex items-center gap-2 text-sm text-muted">
                     <Users className="h-4 w-4" />
-                    <span>{plan.usuarios} usuarios</span>
+                    <span>{plan.maxUsers} usuarios</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted">
                     <LayoutGrid className="h-4 w-4" />
-                    <span>{plan.espacios} espacios</span>
+                    <span>{plan.maxWorkspaces} espacios</span>
                   </div>
                 </div>
               </div>

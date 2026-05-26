@@ -32,6 +32,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      cities: {
+        Row: {
+          department_id: number
+          id: number
+          is_capital: boolean
+          name: string
+        }
+        Insert: {
+          department_id: number
+          id?: number
+          is_capital?: boolean
+          name: string
+        }
+        Update: {
+          department_id?: number
+          id?: number
+          is_capital?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cities_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          code: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          id: number
+          name: string
+        }
+        Update: {
+          code?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string

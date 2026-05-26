@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { formatFechaCortaCO } from "@/lib/i18n/co";
 
 export interface OrgContexto {
   id: string;
@@ -104,11 +105,7 @@ export async function getOrgMiembros(tenantId: string): Promise<OrgMiembro[]> {
       rol: traducirRol(m.role as string),
       rolCode: m.role as string,
       estado: m.status as string,
-      desde: new Date(m.created_at as string).toLocaleDateString("es-CO", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
+      desde: formatFechaCortaCO(m.created_at as string),
     };
   });
 }
@@ -127,10 +124,7 @@ export async function getInvitacionesPendientes(tenantId: string) {
     id: inv.id as string,
     email: inv.email as string,
     rol: traducirRol(inv.role as string),
-    expira: new Date(inv.expires_at as string).toLocaleDateString("es-CO", {
-      month: "short",
-      day: "numeric",
-    }),
+    expira: formatFechaCortaCO(inv.expires_at as string),
   }));
 }
 

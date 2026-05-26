@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { formatFechaCO } from "@/lib/i18n/co";
 import { Building2, Clock, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { AceptarButton } from "./aceptar-button";
@@ -49,11 +50,7 @@ export default async function UnirmePage({ params }: { params: Promise<{ token: 
     : (inv.tenants as { name: string; slug: string } | null);
 
   const rol = ROLES[inv.role as string] ?? inv.role;
-  const expira = new Date(inv.expires_at as string).toLocaleDateString("es-CO", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const expira = formatFechaCO(inv.expires_at as string);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">

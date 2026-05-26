@@ -6,6 +6,7 @@ import { enviarEmail } from "@/lib/email/send";
 import { getAppUrl } from "@/lib/email/client";
 import { InvitacionEmail } from "@/lib/email/templates/invitacion";
 import { verificarLimite } from "@/lib/billing/limits";
+import { formatFechaCO } from "@/lib/i18n/co";
 
 const ROLES_INVITABLES = ["tenant_admin", "member", "viewer"];
 
@@ -68,10 +69,7 @@ export async function enviarInvitacion(
   const nombreInvitador =
     (user.user_metadata?.nombre_completo as string | undefined) ?? user.email ?? null;
   const urlAceptar = `${getAppUrl()}/unirme/${inv.token}`;
-  const expiraEn = new Intl.DateTimeFormat("es-CO", {
-    dateStyle: "long",
-    timeZone: "America/Bogota",
-  }).format(new Date(inv.expires_at));
+  const expiraEn = formatFechaCO(inv.expires_at);
 
   const envio = await enviarEmail({
     to: email,
