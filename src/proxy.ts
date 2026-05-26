@@ -35,8 +35,9 @@ export async function proxy(request: NextRequest) {
   const isUnirme = pathname.startsWith("/unirme");
   const isPostReset =
     pathname.startsWith("/auth/nueva-clave") || pathname.startsWith("/auth/confirm");
+  const isLanding = pathname === "/";
 
-  if (!user && !isAuthRoute && !isUnirme) {
+  if (!user && !isAuthRoute && !isUnirme && !isLanding) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 

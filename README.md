@@ -6,7 +6,7 @@ Base reutilizable de SaaS para vender por suscripción a PYMES colombianas. Un s
 
 ## Estado
 
-Base lista (~85%): auth + recuperar contraseña, multi-tenant, roles, RLS, invitaciones con email, audit log, UI shell, emails (Resend), billing Wompi (trial 14d + límites por plan), formateadores y datos geográficos CO, validadores NIT/cédula/teléfono, infraestructura de módulos activables (registry + sidebar dinámico + guards + UI de activación). Pendiente: producción (Sentry, PostHog, CI/CD, landing, tests E2E) y construir módulos de negocio reales. Plan completo en `C:\Users\diego\.claude\plans\` o pregunta a Claude por el plan vigente.
+Base lista (~95%): auth + recuperar contraseña, multi-tenant, roles, RLS, invitaciones con email, audit log, UI shell, emails (Resend), billing Wompi (trial 14d + límites por plan), formateadores y datos geográficos CO, validadores NIT/cédula/teléfono, infraestructura de módulos activables, **landing pública**, observabilidad (Sentry + PostHog opcionales), logging estructurado (pino), tests E2E (Playwright), CI (GitHub Actions). Pendiente: conectar Vercel y construir módulos de negocio reales (Agenda recomendada). Plan completo en `C:\Users\diego\.claude\plans\`.
 
 ## Setup local
 
@@ -144,6 +144,27 @@ Si `RESEND_API_KEY` no está configurada, los envíos hacen log en consola (modo
 - Redirect URLs: agrega `http://localhost:3000/auth/confirm` y tu equivalente prod
 
 En Supabase Studio → Authentication → Email Templates → "Reset Password", asegúrate que el enlace use `{{ .ConfirmationURL }}` (Supabase ya genera la URL correcta con `?next=/auth/nueva-clave`).
+
+## Observabilidad y logging
+
+- **Sentry** — server + edge en `src/instrumentation.ts`, client en `src/instrumentation-client.ts`. Si `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` están vacíos no envía nada (modo no-op). `withSentryConfig` en `next.config.ts` sube source maps si hay `SENTRY_AUTH_TOKEN` en build.
+- **PostHog** — `src/components/providers/posthog-provider.tsx` envuelve el árbol y captura pageviews + autocapture. Sin `NEXT_PUBLIC_POSTHOG_KEY` el provider hace passthrough sin cargar el SDK.
+- **Logger** — `src/lib/log.ts` exporta `log` (pino) y `logger("scope")`. Redacta automáticamente `password`, `token`, `authorization`, etc. JSON en prod, pretty en dev.
+
+## Tests E2E
+
+Playwright en `tests/e2e/`. Arranque:
+```bash
+npx playwright install chromium
+npx playwright test
+```
+El test smoke verifica que la landing carga y los CTAs llevan a login/registro. Tests con auth real se agregan a medida que se construyan módulos.
+
+## CI/CD
+
+GitHub Actions en `.github/workflows/ci.yml` corre lint + typecheck + build en cada push a `master` y en PRs. Requiere los secretos:
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
+- (Opcional) `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` para subir source maps
 
 ## Deploy
 

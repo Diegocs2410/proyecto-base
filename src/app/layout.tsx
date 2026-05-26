@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
@@ -30,7 +32,9 @@ export default function RootLayout({
       style={{ colorScheme: "light" }}
     >
       <body className="min-h-full">
-        {children}
+        <Suspense>
+          <PostHogProvider>{children}</PostHogProvider>
+        </Suspense>
         <Toaster />
       </body>
     </html>

@@ -1,3 +1,4 @@
+import { LandingPage } from "@/app/(public)/landing-page";
 import { AppShell } from "@/components/layout/app-shell";
 import { AuditTimeline } from "@/components/ui/audit-timeline";
 import { Button } from "@/components/ui/button";
@@ -5,11 +6,28 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import { PlanBadge } from "@/components/ui/plan-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { getAuditReciente, getEstadisticasDashboard, getOrganizaciones } from "@/lib/data/dashboard";
+import {
+  getAuditReciente,
+  getEstadisticasDashboard,
+  getOrganizaciones,
+} from "@/lib/data/dashboard";
+import { createClient } from "@/lib/supabase/server";
 import { Building2, CheckCircle2, ExternalLink, Plus, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 
 export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Visitantes anónimos ven la landing pública.
+  if (!user) {
+    return <LandingPage />;
+  }
+
+  // El proxy ya redirige a /org/[slug] a usuarios no platform_admin,
+  // así que aquí solo llegan platform admins.
   const [stats, organizaciones, auditLogs] = await Promise.all([
     getEstadisticasDashboard(),
     getOrganizaciones(),
@@ -29,7 +47,8 @@ export default async function Home() {
               Gestiona organizaciones, usuarios y espacios de trabajo desde un solo lugar.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-              Administración global con seguridad, roles, límites y auditoría como piezas centrales desde el inicio.
+              Administración global con seguridad, roles, límites y auditoría como piezas centrales
+              desde el inicio.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -63,7 +82,12 @@ export default async function Home() {
             trend="de acceso"
             value={String(stats.roles)}
           />
-          <MetricCard icon={ShieldCheck} label="Disponibilidad" trend="Vercel + Supabase" value="99.9%" />
+          <MetricCard
+            icon={ShieldCheck}
+            label="Disponibilidad"
+            trend="Vercel + Supabase"
+            value="99.9%"
+          />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
@@ -71,7 +95,9 @@ export default async function Home() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Organizaciones</h2>
-                <p className="text-sm text-muted">Organizaciones registradas, sus planes y estado operativo.</p>
+                <p className="text-sm text-muted">
+                  Organizaciones registradas, sus planes y estado operativo.
+                </p>
               </div>
               <Button variant="secondary">Ver todas</Button>
             </div>
@@ -99,7 +125,11 @@ export default async function Home() {
                     <span className="text-muted">{org.plan}</span>
                     <span className="text-muted">{org.miembros}</span>
                     <StatusBadge status={org.estado === "active" ? "success" : "warning"}>
-                      {org.estado === "active" ? "Activa" : org.estado === "trialing" ? "Prueba" : "Inactiva"}
+                      {org.estado === "active"
+                        ? "Activa"
+                        : org.estado === "trialing"
+                          ? "Prueba"
+                          : "Inactiva"}
                     </StatusBadge>
                     <Link
                       className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
@@ -115,7 +145,13 @@ export default async function Home() {
           </div>
 
           {auditLogs.length > 0 ? (
-            <AuditTimeline events={auditLogs.map((l) => ({ title: l.titulo, description: l.descripcion, time: l.tiempo }))} />
+            <AuditTimeline
+              events={auditLogs.map((l) => ({
+                title: l.titulo,
+                description: l.descripcion,
+                time: l.tiempo,
+              }))}
+            />
           ) : (
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-foreground">Auditoría reciente</h2>
