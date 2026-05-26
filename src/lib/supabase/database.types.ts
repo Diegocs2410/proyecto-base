@@ -32,6 +32,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: unknown
+          metadata: Json
+          tenant_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json
+          tenant_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           department_id: number
@@ -79,50 +123,6 @@ export type Database = {
         }
         Relationships: []
       }
-      audit_logs: {
-        Row: {
-          action: string
-          actor_user_id: string | null
-          created_at: string
-          entity_id: string | null
-          entity_type: string
-          id: string
-          ip_address: unknown
-          metadata: Json
-          tenant_id: string | null
-        }
-        Insert: {
-          action: string
-          actor_user_id?: string | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type: string
-          id?: string
-          ip_address?: unknown
-          metadata?: Json
-          tenant_id?: string | null
-        }
-        Update: {
-          action?: string
-          actor_user_id?: string | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string
-          id?: string
-          ip_address?: unknown
-          metadata?: Json
-          tenant_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "audit_logs_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       invitations: {
         Row: {
           created_at: string
@@ -160,6 +160,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "invitations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_events: {
+        Row: {
+          amount_in_cents: number | null
+          created_at: string
+          id: string
+          raw_payload: Json
+          signature_checksum: string
+          status: string | null
+          subscription_id: string | null
+          tenant_id: string | null
+          wompi_event_type: string
+          wompi_transaction_id: string | null
+        }
+        Insert: {
+          amount_in_cents?: number | null
+          created_at?: string
+          id?: string
+          raw_payload: Json
+          signature_checksum: string
+          status?: string | null
+          subscription_id?: string | null
+          tenant_id?: string | null
+          wompi_event_type: string
+          wompi_transaction_id?: string | null
+        }
+        Update: {
+          amount_in_cents?: number | null
+          created_at?: string
+          id?: string
+          raw_payload?: Json
+          signature_checksum?: string
+          status?: string | null
+          subscription_id?: string | null
+          tenant_id?: string | null
+          wompi_event_type?: string
+          wompi_transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_events_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -344,60 +398,6 @@ export type Database = {
             foreignKeyName: "subscriptions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: true
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payment_events: {
-        Row: {
-          amount_in_cents: number | null
-          created_at: string
-          id: string
-          raw_payload: Json
-          signature_checksum: string
-          status: string | null
-          subscription_id: string | null
-          tenant_id: string | null
-          wompi_event_type: string
-          wompi_transaction_id: string | null
-        }
-        Insert: {
-          amount_in_cents?: number | null
-          created_at?: string
-          id?: string
-          raw_payload: Json
-          signature_checksum: string
-          status?: string | null
-          subscription_id?: string | null
-          tenant_id?: string | null
-          wompi_event_type: string
-          wompi_transaction_id?: string | null
-        }
-        Update: {
-          amount_in_cents?: number | null
-          created_at?: string
-          id?: string
-          raw_payload?: Json
-          signature_checksum?: string
-          status?: string | null
-          subscription_id?: string | null
-          tenant_id?: string | null
-          wompi_event_type?: string
-          wompi_transaction_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payment_events_subscription_id_fkey"
-            columns: ["subscription_id"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_events_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
