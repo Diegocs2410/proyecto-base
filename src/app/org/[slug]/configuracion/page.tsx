@@ -2,6 +2,8 @@ import { OrgShell } from "@/components/org/org-shell";
 import { Button } from "@/components/ui/button";
 import { getOrgPorSlug } from "@/lib/data/org";
 import { createClient } from "@/lib/supabase/server";
+import { Blocks } from "lucide-react";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 export default async function OrgConfiguracionPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -74,6 +76,26 @@ export default async function OrgConfiguracionPage({ params }: { params: Promise
               </div>
             </div>
           </div>
+
+          <Link
+            className="group flex items-start justify-between gap-4 rounded-3xl border border-border bg-card p-6 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+            href={`/org/${slug}/configuracion/modulos`}
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                <Blocks className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Módulos</h2>
+                <p className="mt-0.5 text-sm text-muted">
+                  Activa o desactiva funcionalidades de tu organización (Notas, Agenda, etc.).
+                </p>
+              </div>
+            </div>
+            <span className="text-sm font-medium text-slate-500 transition group-hover:text-slate-900">
+              Abrir →
+            </span>
+          </Link>
 
           <div className="rounded-3xl border border-red-100 bg-red-50 p-6">
             <h2 className="text-base font-semibold text-red-700">Zona de peligro</h2>

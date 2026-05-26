@@ -1,11 +1,18 @@
 "use client";
 
 import type { OrgContexto } from "@/lib/data/org";
+import type { ModuleManifest } from "@/modules/types";
 import { Cog, CreditCard, Home, Mail, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const items = (slug: string) => [
+interface NavItem {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+}
+
+const itemsBase = (slug: string): NavItem[] => [
   { label: "Inicio", icon: Home, href: `/org/${slug}` },
   { label: "Miembros", icon: Users, href: `/org/${slug}/miembros` },
   { label: "Invitar personas", icon: Mail, href: `/org/${slug}/invitar` },
@@ -13,9 +20,27 @@ const items = (slug: string) => [
   { label: "Configuración", icon: Cog, href: `/org/${slug}/configuracion` },
 ];
 
-export function OrgSidebar({ org }: { org: OrgContexto }) {
+function itemsModulos(slug: string, modulos: ModuleManifest[]): NavItem[] {
+  return modulos.flatMap((m) =>
+    m.navItems.map((nav) => ({
+      label: nav.label,
+      icon: nav.icon ?? m.icon,
+      href: nav.href
+        ? `/org/${slug}/${m.key}/${nav.href}`.replace(/\/$/, "")
+        : `/org/${slug}/${m.key}`,
+    })),
+  );
+}
+
+interface OrgSidebarProps {
+  org: OrgContexto;
+  modulosActivos: ModuleManifest[];
+}
+
+export function OrgSidebar({ org, modulosActivos }: OrgSidebarProps) {
   const pathname = usePathname();
-  const nav = items(org.slug);
+  const base = itemsBase(org.slug);
+  const modulos = itemsModulos(org.slug, modulosActivos);
 
   return (
     <aside className="hidden border-r border-slate-800 bg-slate-950 text-white lg:block">
@@ -33,24 +58,24 @@ export function OrgSidebar({ org }: { org: OrgContexto }) {
         </div>
 
         <nav className="grid gap-1 p-3">
-          {nav.map((item) => {
-            const activo =
-              item.href === `/org/${org.slug}`
-                ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(item.href + "/");
-            return (
-              <Link
-                className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition ${
-                  activo ? "bg-white/10 text-white font-semibold" : "text-slate-300 hover:bg-slate-900 hover:text-white"
-                }`}
-                href={item.href}
-                key={item.label}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
+          {base.map((item) => (
+            <ItemLink activo={esActivo(pathname, item.href, org.slug)} item={item} key={item.label} />
+          ))}
+
+          {modulos.length > 0 && (
+            <>
+              <p className="mt-4 px-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Módulos
+              </p>
+              {modulos.map((item) => (
+                <ItemLink
+                  activo={esActivo(pathname, item.href, org.slug)}
+                  item={item}
+                  key={item.href}
+                />
+              ))}
+            </>
+          )}
         </nav>
 
         <div className="mt-auto p-4">
@@ -63,5 +88,27 @@ export function OrgSidebar({ org }: { org: OrgContexto }) {
         </div>
       </div>
     </aside>
+  );
+}
+
+function esActivo(pathname: string, href: string, slug: string): boolean {
+  if (href === `/org/${slug}`) return pathname === href;
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+function ItemLink({ activo, item }: { activo: boolean; item: NavItem }) {
+  const Icono = item.icon;
+  return (
+    <Link
+      className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition ${
+        activo
+          ? "bg-white/10 text-white font-semibold"
+          : "text-slate-300 hover:bg-slate-900 hover:text-white"
+      }`}
+      href={item.href}
+    >
+      <Icono className="h-4 w-4" />
+      {item.label}
+    </Link>
   );
 }

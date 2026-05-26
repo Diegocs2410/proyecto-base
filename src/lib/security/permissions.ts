@@ -1,11 +1,31 @@
 import type { TenantContext } from "@/lib/auth/tenant-context";
 
-export type Permission = "tenant.read" | "tenant.manage" | "members.manage" | "billing.manage" | "audit.read";
+export type Permission =
+  | "tenant.read"
+  | "tenant.manage"
+  | "members.manage"
+  | "billing.manage"
+  | "modules.manage"
+  | "audit.read";
 
 const rolePermissions: Record<string, Permission[]> = {
-  platform_admin: ["tenant.read", "tenant.manage", "members.manage", "billing.manage", "audit.read"],
-  tenant_owner: ["tenant.read", "tenant.manage", "members.manage", "billing.manage", "audit.read"],
-  tenant_admin: ["tenant.read", "members.manage", "audit.read"],
+  platform_admin: [
+    "tenant.read",
+    "tenant.manage",
+    "members.manage",
+    "billing.manage",
+    "modules.manage",
+    "audit.read",
+  ],
+  tenant_owner: [
+    "tenant.read",
+    "tenant.manage",
+    "members.manage",
+    "billing.manage",
+    "modules.manage",
+    "audit.read",
+  ],
+  tenant_admin: ["tenant.read", "members.manage", "modules.manage", "audit.read"],
   member: ["tenant.read"],
   viewer: ["tenant.read"],
 };

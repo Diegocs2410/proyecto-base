@@ -6,7 +6,7 @@ Base reutilizable de SaaS para vender por suscripción a PYMES colombianas. Un s
 
 ## Estado
 
-Base lista (~70%): auth + recuperar contraseña, multi-tenant, roles, RLS, invitaciones con email, audit log, UI shell, emails transaccionales (Resend), billing con Wompi (one-time checkout, webhooks, límites por plan, trial 14 días), formateadores COP. Pendiente: validadores CO (NIT/cédula/geo), módulos activables, producción (Sentry, CI/CD, landing). Plan completo en `C:\Users\diego\.claude\plans\` o pregunta a Claude por el plan vigente.
+Base lista (~85%): auth + recuperar contraseña, multi-tenant, roles, RLS, invitaciones con email, audit log, UI shell, emails (Resend), billing Wompi (trial 14d + límites por plan), formateadores y datos geográficos CO, validadores NIT/cédula/teléfono, infraestructura de módulos activables (registry + sidebar dinámico + guards + UI de activación). Pendiente: producción (Sentry, PostHog, CI/CD, landing, tests E2E) y construir módulos de negocio reales. Plan completo en `C:\Users\diego\.claude\plans\` o pregunta a Claude por el plan vigente.
 
 ## Setup local
 
@@ -85,6 +85,26 @@ scripts/
 ## Auditoría
 
 Todas las acciones críticas se registran en `audit_logs` vía el helper `logAudit()` en `src/lib/audit/log.ts`. Visualízalas en `/auditoria` (global) o `/org/[slug]` (por organización).
+
+## Módulos activables
+
+Cada negocio activa solo los módulos que necesita (Agenda, POS, CRM, Notas, …). La infraestructura vive en `src/modules/` y `src/lib/modules/`:
+
+- `tenant_features (enabled boolean)` es la tabla que persiste qué módulo está activo por org.
+- `src/modules/registry.ts` lista los módulos disponibles. Cada módulo aporta un `ModuleManifest` (`key`, `name`, `icon`, `navItems`, `minPlanCode`).
+- `OrgSidebar` lee `getEnabledModules(tenantId)` y renderiza los `navItems` de los manifests activos.
+- Las páginas de cada módulo llaman `requireModuleEnabled(slug, moduleKey)` al inicio; si el módulo no está activo redirige a `/configuracion/modulos`.
+- `/org/[slug]/configuracion/modulos` muestra todos los módulos disponibles con toggles (requiere permiso `modules.manage`), bloqueados cuando el plan no alcanza al `minPlanCode`.
+
+### Agregar un módulo nuevo
+
+1. `src/modules/<key>/manifest.ts` — exporta un `ModuleManifest`
+2. Agregar el manifest a `src/modules/registry.ts`
+3. `src/app/org/[slug]/(modules)/<key>/page.tsx` — wrapper 5 líneas que llama el guard y renderiza el componente del módulo
+4. Lógica del módulo (queries, actions, componentes) bajo `src/modules/<key>/`
+5. Si requiere tablas, agregar migración numerada en `supabase/migrations/`
+
+El módulo `notas` en `src/modules/notas/` sirve como referencia mínima funcional.
 
 ## Facturación (Wompi)
 
