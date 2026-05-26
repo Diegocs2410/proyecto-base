@@ -1,10 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import type { Database } from "@/lib/supabase/database.types";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
@@ -31,21 +33,19 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = pathname.startsWith("/auth");
   const isOnboarding = pathname.startsWith("/onboarding");
   const isUnirme = pathname.startsWith("/unirme");
+  const isPostReset =
+    pathname.startsWith("/auth/nueva-clave") || pathname.startsWith("/auth/confirm");
 
   if (!user && !isAuthRoute && !isUnirme) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  if (user && isAuthRoute) {
+  if (user && isAuthRoute && !isPostReset) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
   if (user && !isAuthRoute && !isOnboarding && !isUnirme) {
-    const { createClient: createAdmin } = await import("@supabase/supabase-js");
-    const admin = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SECRET_KEY!,
-    );
+    const admin = createAdminClient();
 
     const { data: membresia } = await admin
       .from("tenant_users")
@@ -62,11 +62,7 @@ export async function proxy(request: NextRequest) {
     const isPlatformAdmin = membresia.role === "platform_admin";
     const isOrgRoute = pathname.startsWith("/org/");
     const isGlobalRoute = !isOrgRoute && !isOnboarding;
-
-    const tenant = Array.isArray(membresia.tenants)
-      ? membresia.tenants[0]
-      : membresia.tenants;
-    const slug = (tenant as { slug: string } | null)?.slug;
+    const slug = membresia.tenants?.slug;
 
     if (!isPlatformAdmin && isGlobalRoute && slug) {
       return NextResponse.redirect(new URL(`/org/${slug}`, request.url));

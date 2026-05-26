@@ -20,6 +20,8 @@ function LoginForm() {
   const [errorServidor, setErrorServidor] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? undefined;
+  const resetOk = searchParams.get("reset") === "ok";
+  const errorParam = searchParams.get("error");
 
   const {
     register,
@@ -42,6 +44,22 @@ function LoginForm() {
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">¡Hola de nuevo!</h1>
         <p className="mt-1 text-sm text-slate-500">Entra con tu correo y contraseña</p>
       </div>
+
+      {resetOk && (
+        <p className="mb-4 rounded-xl bg-green-50 px-4 py-2.5 text-sm text-green-700">
+          Tu contraseña se cambió. Inicia sesión con la nueva clave.
+        </p>
+      )}
+      {errorParam === "enlace_expirado" && (
+        <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+          El enlace expiró. Solicita uno nuevo.
+        </p>
+      )}
+      {errorParam === "enlace_invalido" && (
+        <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+          El enlace no es válido.
+        </p>
+      )}
 
       <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-1.5">

@@ -1,34 +1,9 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission, esFalla } from "@/lib/security/require";
+import { logAudit } from "@/lib/audit/log";
 
 const ROLES_GESTIONABLES = ["tenant_admin", "member", "viewer"];
-const ROLES_CON_PERMISOS = ["platform_admin", "tenant_owner", "tenant_admin"];
-
-async function verificarPermisos(tenantId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Sesión expirada." };
-
-  const admin = createAdminClient();
-  const { data: membresia } = await admin
-    .from("tenant_users")
-    .select("role")
-    .eq("tenant_id", tenantId)
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle();
-
-  if (!membresia || !ROLES_CON_PERMISOS.includes(membresia.role as string)) {
-    return { error: "No tienes permisos para gestionar miembros." };
-  }
-
-  return { user, admin };
-}
 
 export async function cambiarRol(
   membresiaId: string,
@@ -39,8 +14,8 @@ export async function cambiarRol(
     return { error: "Rol no válido." };
   }
 
-  const resultado = await verificarPermisos(tenantId);
-  if ("error" in resultado) return resultado;
+  const resultado = await requirePermission(tenantId, "members.manage");
+  if (esFalla(resultado)) return resultado;
   const { user, admin } = resultado;
 
   const { data: objetivo } = await admin
@@ -52,7 +27,7 @@ export async function cambiarRol(
 
   if (!objetivo) return { error: "Miembro no encontrado." };
 
-  if (!ROLES_GESTIONABLES.includes(objetivo.role as string)) {
+  if (!ROLES_GESTIONABLES.includes(objetivo.role)) {
     return { error: "No puedes cambiar el rol de este usuario." };
   }
 
@@ -67,14 +42,17 @@ export async function cambiarRol(
 
   if (error) return { error: "No se pudo actualizar el rol." };
 
-  await admin.from("audit_logs").insert({
-    tenant_id: tenantId,
-    actor_user_id: user.id,
-    action: "update",
-    entity_type: "user",
-    entity_id: objetivo.user_id as string,
-    metadata: { rol_anterior: objetivo.role, rol_nuevo: nuevoRol },
-  });
+  await logAudit(
+    {
+      tenantId,
+      actorUserId: user.id,
+      action: "update",
+      entityType: "user",
+      entityId: objetivo.user_id,
+      metadata: { rol_anterior: objetivo.role, rol_nuevo: nuevoRol },
+    },
+    admin,
+  );
 
   return {};
 }
@@ -83,8 +61,8 @@ export async function removerMiembro(
   membresiaId: string,
   tenantId: string,
 ): Promise<{ error?: string }> {
-  const resultado = await verificarPermisos(tenantId);
-  if ("error" in resultado) return resultado;
+  const resultado = await requirePermission(tenantId, "members.manage");
+  if (esFalla(resultado)) return resultado;
   const { user, admin } = resultado;
 
   const { data: objetivo } = await admin
@@ -96,7 +74,7 @@ export async function removerMiembro(
 
   if (!objetivo) return { error: "Miembro no encontrado." };
 
-  if (!ROLES_GESTIONABLES.includes(objetivo.role as string)) {
+  if (!ROLES_GESTIONABLES.includes(objetivo.role)) {
     return { error: "No puedes eliminar a este usuario." };
   }
 
@@ -104,21 +82,21 @@ export async function removerMiembro(
     return { error: "No puedes eliminarte a ti mismo." };
   }
 
-  const { error } = await admin
-    .from("tenant_users")
-    .delete()
-    .eq("id", membresiaId);
+  const { error } = await admin.from("tenant_users").delete().eq("id", membresiaId);
 
   if (error) return { error: "No se pudo eliminar al miembro." };
 
-  await admin.from("audit_logs").insert({
-    tenant_id: tenantId,
-    actor_user_id: user.id,
-    action: "delete",
-    entity_type: "user",
-    entity_id: objetivo.user_id as string,
-    metadata: { rol: objetivo.role },
-  });
+  await logAudit(
+    {
+      tenantId,
+      actorUserId: user.id,
+      action: "delete",
+      entityType: "user",
+      entityId: objetivo.user_id,
+      metadata: { rol: objetivo.role },
+    },
+    admin,
+  );
 
   return {};
 }

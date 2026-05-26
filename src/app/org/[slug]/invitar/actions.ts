@@ -1,18 +1,31 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { requirePermission, esFalla } from "@/lib/security/require";
+import { logAudit } from "@/lib/audit/log";
+import { enviarEmail } from "@/lib/email/send";
+import { getAppUrl } from "@/lib/email/client";
+import { InvitacionEmail } from "@/lib/email/templates/invitacion";
+import { verificarLimite } from "@/lib/billing/limits";
+
+const ROLES_INVITABLES = ["tenant_admin", "member", "viewer"];
 
 export async function enviarInvitacion(
   tenantId: string,
   email: string,
   rol: string,
 ): Promise<{ error?: string; token?: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Sesión expirada." };
+  if (!ROLES_INVITABLES.includes(rol)) {
+    return { error: "Rol no válido para invitación." };
+  }
 
-  const admin = createAdminClient();
+  const resultado = await requirePermission(tenantId, "members.manage");
+  if (esFalla(resultado)) return resultado;
+  const { user, context, admin } = resultado;
+
+  const limite = await verificarLimite(tenantId, "users", admin);
+  if (!limite.permitido) {
+    return { error: limite.motivo ?? "Llegaste al límite de tu plan." };
+  }
 
   const { error } = await admin.from("invitations").insert({
     tenant_id: tenantId,
@@ -22,13 +35,15 @@ export async function enviarInvitacion(
   });
 
   if (error) {
-    if (error.code === "23505") return { error: "Ya existe una invitación pendiente para ese correo." };
+    if (error.code === "23505") {
+      return { error: "Ya existe una invitación pendiente para ese correo." };
+    }
     return { error: "No se pudo enviar la invitación. Intenta de nuevo." };
   }
 
   const { data: inv } = await admin
     .from("invitations")
-    .select("token")
+    .select("id, token, expires_at")
     .eq("tenant_id", tenantId)
     .eq("email", email)
     .eq("status", "pending")
@@ -36,7 +51,49 @@ export async function enviarInvitacion(
     .limit(1)
     .single();
 
-  return { token: inv?.token as string | undefined };
+  if (!inv) return { error: "No se pudo recuperar la invitación recién creada." };
+
+  await logAudit(
+    {
+      tenantId,
+      actorUserId: user.id,
+      action: "invite",
+      entityType: "invitation",
+      entityId: inv.id,
+      metadata: { email, rol },
+    },
+    admin,
+  );
+
+  const nombreInvitador =
+    (user.user_metadata?.nombre_completo as string | undefined) ?? user.email ?? null;
+  const urlAceptar = `${getAppUrl()}/unirme/${inv.token}`;
+  const expiraEn = new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "long",
+    timeZone: "America/Bogota",
+  }).format(new Date(inv.expires_at));
+
+  const envio = await enviarEmail({
+    to: email,
+    subject: `Te invitaron a ${context.tenantName}`,
+    react: InvitacionEmail({
+      nombreOrg: context.tenantName,
+      nombreInvitador,
+      rol,
+      urlAceptar,
+      expiraEn,
+    }),
+    tags: [
+      { name: "tipo", value: "invitacion" },
+      { name: "tenant_id", value: tenantId },
+    ],
+  });
+
+  if (!envio.ok) {
+    console.warn("[invitar] Invitación creada pero el email falló:", envio.error);
+  }
+
+  return { token: inv.token };
 }
 
 export type EnviarInvitacionResult = { error?: string; token?: string };

@@ -1,13 +1,19 @@
 import { config } from "dotenv";
 import { resolve } from "path";
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "../src/lib/supabase/database.types";
 
 config({ path: resolve(process.cwd(), ".env.local") });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
-);
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const key = process.env.SUPABASE_SECRET_KEY;
+
+if (!url || !key) {
+  console.error("Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SECRET_KEY en .env.local");
+  process.exit(1);
+}
+
+const supabase = createClient<Database>(url, key);
 
 const PLAN_IDS: Record<string, string> = {};
 
@@ -28,7 +34,7 @@ async function cargarPlanes() {
   const { data } = await supabase.from("subscription_plans").select("id, code");
   if (data) {
     for (const plan of data) {
-      PLAN_IDS[plan.code as string] = plan.id as string;
+      PLAN_IDS[plan.code] = plan.id;
     }
   }
   console.log("✅ Planes cargados:", Object.keys(PLAN_IDS).join(", "));
@@ -164,6 +170,17 @@ async function crearMiembros() {
 }
 
 async function crearAuditLogs() {
+  const { count } = await supabase
+    .from("audit_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("entity_type", "tenant")
+    .in("tenant_id", Object.values(TENANT_IDS));
+
+  if ((count ?? 0) > 0) {
+    console.log("↻ Audit logs demo ya existen, saltando");
+    return;
+  }
+
   const logs = [
     {
       tenant_id: TENANT_IDS.techcorp,
@@ -240,9 +257,16 @@ async function crearInvitaciones() {
 }
 
 async function main() {
-  console.log("\n🌱 Iniciando seed de desarrollo...\n");
-
   await cargarPlanes();
+
+  if (process.env.SEED_DEMO_TENANTS !== "true") {
+    console.log("× SEED_DEMO_TENANTS != true, no se crean datos demo.");
+    console.log("  Para sembrar usuarios/tenants demo: SEED_DEMO_TENANTS=true npm run seed");
+    return;
+  }
+
+  console.log("\n🌱 Sembrando datos demo...\n");
+
   await crearUsuarios();
   await crearTenants();
   await crearTenantSettings();

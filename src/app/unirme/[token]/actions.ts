@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit/log";
 import { redirect } from "next/navigation";
 
 export async function aceptarInvitacion(token: string): Promise<{ error?: string }> {
@@ -22,7 +23,7 @@ export async function aceptarInvitacion(token: string): Promise<{ error?: string
 
   if (invError || !inv) return { error: "Esta invitación no existe o ya no es válida." };
   if (inv.status !== "pending") return { error: "Esta invitación ya fue usada o venció." };
-  if (new Date(inv.expires_at as string) < new Date()) {
+  if (new Date(inv.expires_at) < new Date()) {
     await admin.from("invitations").update({ status: "expired" }).eq("id", inv.id);
     return { error: "Esta invitación venció. Pídele a tu administrador que envíe una nueva." };
   }
@@ -41,9 +42,17 @@ export async function aceptarInvitacion(token: string): Promise<{ error?: string
 
   await admin.from("invitations").update({ status: "accepted" }).eq("id", inv.id);
 
-  const tenant = Array.isArray(inv.tenants)
-    ? (inv.tenants[0] as { slug: string } | undefined)
-    : (inv.tenants as { slug: string } | null);
+  await logAudit(
+    {
+      tenantId: inv.tenant_id,
+      actorUserId: user.id,
+      action: "accept",
+      entityType: "invitation",
+      entityId: inv.id,
+      metadata: { email: inv.email, rol: inv.role },
+    },
+    admin,
+  );
 
-  redirect(`/org/${tenant?.slug ?? ""}`);
+  redirect(`/org/${inv.tenants?.slug ?? ""}`);
 }

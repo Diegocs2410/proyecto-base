@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getAppUrl } from "@/lib/email/client";
 import { redirect } from "next/navigation";
 
 export type AuthState = { error?: string; success?: string } | undefined;
@@ -49,6 +50,39 @@ export async function cerrarSesion() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/auth/login");
+}
+
+export async function solicitarReset(email: string): Promise<AuthState> {
+  const supabase = await createClient();
+  const redirectTo = `${getAppUrl()}/auth/confirm?next=/auth/nueva-clave`;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+
+  if (error) return { error: traducirError(error.message) };
+
+  return {
+    success:
+      "Si la cuenta existe te enviamos un correo con instrucciones. Revisa tu bandeja de entrada.",
+  };
+}
+
+export async function actualizarClave(password: string): Promise<AuthState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      error: "El enlace ya no es válido o expiró. Solicita uno nuevo.",
+    };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: traducirError(error.message) };
+
+  await supabase.auth.signOut();
+  redirect("/auth/login?reset=ok");
 }
 
 function traducirError(message: string): string {

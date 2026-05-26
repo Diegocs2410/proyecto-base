@@ -7,6 +7,7 @@ const rolePermissions: Record<string, Permission[]> = {
   tenant_owner: ["tenant.read", "tenant.manage", "members.manage", "billing.manage", "audit.read"],
   tenant_admin: ["tenant.read", "members.manage", "audit.read"],
   member: ["tenant.read"],
+  viewer: ["tenant.read"],
 };
 
 export function can(context: TenantContext | null, permission: Permission) {

@@ -1,7 +1,7 @@
 "use client";
 
 import type { OrgContexto } from "@/lib/data/org";
-import { Cog, Home, Mail, Users } from "lucide-react";
+import { Cog, CreditCard, Home, Mail, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,6 +9,7 @@ const items = (slug: string) => [
   { label: "Inicio", icon: Home, href: `/org/${slug}` },
   { label: "Miembros", icon: Users, href: `/org/${slug}/miembros` },
   { label: "Invitar personas", icon: Mail, href: `/org/${slug}/invitar` },
+  { label: "Facturación", icon: CreditCard, href: `/org/${slug}/billing` },
   { label: "Configuración", icon: Cog, href: `/org/${slug}/configuracion` },
 ];
 
