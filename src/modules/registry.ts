@@ -1,4 +1,5 @@
 import type { ModuleManifest } from "@/modules/types";
+import { agendaManifest } from "@/modules/agenda/manifest";
 import { notasManifest } from "@/modules/notas/manifest";
 
 /**
@@ -10,7 +11,7 @@ import { notasManifest } from "@/modules/notas/manifest";
  *      requireModuleEnabled y renderiza el componente del módulo)
  *   4. Si requiere tablas: crear migración en supabase/migrations/
  */
-export const moduleRegistry: ModuleManifest[] = [notasManifest];
+export const moduleRegistry: ModuleManifest[] = [agendaManifest, notasManifest];
 
 export function getManifestByKey(key: string): ModuleManifest | undefined {
   return moduleRegistry.find((m) => m.key === key);

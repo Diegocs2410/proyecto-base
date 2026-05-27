@@ -33,11 +33,12 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = pathname.startsWith("/auth");
   const isOnboarding = pathname.startsWith("/onboarding");
   const isUnirme = pathname.startsWith("/unirme");
+  const isReservar = pathname.startsWith("/reservar");
   const isPostReset =
     pathname.startsWith("/auth/nueva-clave") || pathname.startsWith("/auth/confirm");
   const isLanding = pathname === "/";
 
-  if (!user && !isAuthRoute && !isUnirme && !isLanding) {
+  if (!user && !isAuthRoute && !isUnirme && !isLanding && !isReservar) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
@@ -45,7 +46,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (user && !isAuthRoute && !isOnboarding && !isUnirme) {
+  if (user && !isAuthRoute && !isOnboarding && !isUnirme && !isReservar) {
     const admin = createAdminClient();
 
     const { data: membresia } = await admin

@@ -76,6 +76,126 @@ export type Database = {
           },
         ]
       }
+      cita_recordatorios: {
+        Row: {
+          canal: string
+          cita_id: string
+          created_at: string
+          enviado_en: string | null
+          error: string | null
+          estado: string
+          id: string
+          programado_para: string
+          tipo: string
+        }
+        Insert: {
+          canal?: string
+          cita_id: string
+          created_at?: string
+          enviado_en?: string | null
+          error?: string | null
+          estado?: string
+          id?: string
+          programado_para: string
+          tipo: string
+        }
+        Update: {
+          canal?: string
+          cita_id?: string
+          created_at?: string
+          enviado_en?: string | null
+          error?: string | null
+          estado?: string
+          id?: string
+          programado_para?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cita_recordatorios_cita_id_fkey"
+            columns: ["cita_id"]
+            isOneToOne: false
+            referencedRelation: "citas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      citas: {
+        Row: {
+          cliente_email: string | null
+          cliente_nombre: string
+          cliente_telefono: string | null
+          creada_por: string | null
+          created_at: string
+          estado: string
+          id: string
+          inicia_en: string
+          notas: string | null
+          origen: string
+          recurso_id: string
+          servicio_id: string
+          tenant_id: string
+          termina_en: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_email?: string | null
+          cliente_nombre: string
+          cliente_telefono?: string | null
+          creada_por?: string | null
+          created_at?: string
+          estado?: string
+          id?: string
+          inicia_en: string
+          notas?: string | null
+          origen?: string
+          recurso_id: string
+          servicio_id: string
+          tenant_id: string
+          termina_en: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_email?: string | null
+          cliente_nombre?: string
+          cliente_telefono?: string | null
+          creada_por?: string | null
+          created_at?: string
+          estado?: string
+          id?: string
+          inicia_en?: string
+          notas?: string | null
+          origen?: string
+          recurso_id?: string
+          servicio_id?: string
+          tenant_id?: string
+          termina_en?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "citas_recurso_id_fkey"
+            columns: ["recurso_id"]
+            isOneToOne: false
+            referencedRelation: "recursos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "citas_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: false
+            referencedRelation: "servicios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "citas_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           department_id: number
@@ -274,6 +394,85 @@ export type Database = {
         }
         Relationships: []
       }
+      recurso_horarios: {
+        Row: {
+          created_at: string
+          dia_semana: number
+          hora_fin: string
+          hora_inicio: string
+          id: string
+          recurso_id: string
+        }
+        Insert: {
+          created_at?: string
+          dia_semana: number
+          hora_fin: string
+          hora_inicio: string
+          id?: string
+          recurso_id: string
+        }
+        Update: {
+          created_at?: string
+          dia_semana?: number
+          hora_fin?: string
+          hora_inicio?: string
+          id?: string
+          recurso_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurso_horarios_recurso_id_fkey"
+            columns: ["recurso_id"]
+            isOneToOne: false
+            referencedRelation: "recursos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recursos: {
+        Row: {
+          activo: boolean
+          color: string
+          created_at: string
+          email: string | null
+          id: string
+          nombre: string
+          tenant_id: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          color?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          nombre: string
+          tenant_id: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          color?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          nombre?: string
+          tenant_id?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recursos_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           permission_id: string
@@ -332,6 +531,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servicios: {
+        Row: {
+          activo: boolean
+          color: string
+          created_at: string
+          descripcion: string | null
+          duracion_min: number
+          id: string
+          nombre: string
+          precio_cop: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          color?: string
+          created_at?: string
+          descripcion?: string | null
+          duracion_min: number
+          id?: string
+          nombre: string
+          precio_cop?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          color?: string
+          created_at?: string
+          descripcion?: string | null
+          duracion_min?: number
+          id?: string
+          nombre?: string
+          precio_cop?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicios_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
